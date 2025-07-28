@@ -1,34 +1,116 @@
 package pages;
 
-import io.appium.java_client.pagefactory.AppiumFieldDecorator;
+import base.Base;
 import io.appium.java_client.android.AndroidDriver;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 
-public class LoginPage {
+public class LoginPage extends Base {
+
+    private final AndroidDriver driver;
+    private WebDriverWait wait;
 
     public LoginPage(AndroidDriver driver) {
-        PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(10)), this);
+        this.driver=driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    @FindBy(xpath = "//android.widget.Button[@content-desc='Food Courts']")
-    public WebElement foodCourtsButton;
 
-    @FindBy(xpath = "//android.widget.EditText")
-    public WebElement mobileNumberField;
+    private WebElement waitForElement(By locator) {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
 
-    @FindBy(xpath = "//android.widget.CheckBox")
-    public WebElement termsCheckBox;
+    private void clickElement(By locator) {
+        WebElement element = waitForElement(locator);
+        element.click();
+    }
 
-    @FindBy(xpath = "//android.widget.Button[@content-desc='Get OTP']")
-    public WebElement getOtpButton;
+    public boolean loginUsingSSO() {
+        try {
+            clickElement(By.xpath("//android.view.View[@content-desc='More Options, Double tap to explore more options']"));
+            clickElement(By.xpath("//android.view.View[@content-desc='Login with SSO']"));
 
-    @FindBy(xpath = "//android.widget.Button[@content-desc='Sign In']")
-    public WebElement signInButton;
+            WebElement emailField = waitForElement(By.xpath("//android.widget.EditText[@resource-id='i0116']"));
+            emailField.sendKeys("test-gokhana@ecolab.com");
 
-    @FindBy(xpath = "//android.widget.EditText")
-    public java.util.List<WebElement> otpBoxes;
+            clickElement(By.xpath("//android.widget.Button[@resource-id='idSIButton9']"));
+
+            WebElement passwordField = waitForElement(By.xpath("//android.widget.EditText[@resource-id='i0118']"));
+            passwordField.sendKeys("r%7,7/d@uA|,B/fapZ/2");
+
+            clickElement(By.xpath("//android.widget.Button[@resource-id='idSIButton9']"));
+
+            System.out.println("SSO login completed successfully.");
+            return true;
+        } catch (Exception e) {
+            System.err.println("SSO login failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean loginThroughOtp() {
+        try {
+            clickElement(By.xpath("//android.view.View[@content-desc='More Options, Double tap to explore more options']"));
+
+            WebElement phoneNumberField = waitForElement(By.xpath("//android.widget.EditText"));
+            phoneNumberField.sendKeys("8072268345");
+
+            Thread.sleep(8000);
+
+            clickElement(By.xpath("//android.widget.CheckBox"));
+            clickElement(By.xpath("//android.view.View[@content-desc='Get OTP']"));
+
+            Thread.sleep(10000);
+
+            clickElement(By.xpath("//android.widget.EditText"));
+
+            WebElement otpField = waitForElement(By.xpath("//android.widget.EditText"));
+            otpField.sendKeys("468671");
+
+            System.out.println("OTP login completed successfully.");
+            return true;
+        } catch (Exception e) {
+            System.err.println("OTP login failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean invalidOtp() {
+        try {
+            clickElement(By.xpath("//android.view.View[contains(@content-desc, 'More Options')]"));
+
+            WebElement phoneNumberField = waitForElement(By.xpath("//android.widget.EditText"));
+            phoneNumberField.sendKeys("8072268345");
+
+            Thread.sleep(5000);
+
+            clickElement(By.xpath("//android.widget.CheckBox"));
+            clickElement(By.xpath("//android.view.View[@content-desc='Get OTP']"));
+
+            Thread.sleep(5000);
+
+            clickElement(By.xpath("//android.widget.EditText"));
+
+            WebElement otpField = waitForElement(By.xpath("//android.widget.EditText"));
+            otpField.sendKeys("123456");
+
+            Thread.sleep(5000);
+
+            WebElement invalidOtpMessage = waitForElement(By.xpath("//android.view.View[contains(@content-desc, 'Invalid OTP')]"));
+            if (invalidOtpMessage.isDisplayed()) {
+                System.out.println("Invalid OTP validation completed successfully.");
+                return true;
+            } else {
+                System.err.println("The 'Invalid OTP' message was not displayed as expected.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Invalid OTP validation failed: " + e.getMessage());
+            return false;
+        }
+    }
 }
